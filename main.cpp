@@ -47,46 +47,7 @@ int main() {
 
     Mat rgb_mat = LAlBe_2_RGB(lalbe_mat);
     cout << "LAlBe > RGB: " << lalbe_mat.at<Vec3f>(0, 0) << " > " << rgb_mat.at<Vec3b>(0, 0) << endl;
-
     imshow("LAlBe > RGB", rgb_mat);
-
-    // Mat rgb_xyz = RGB_2_XYZ(img);
-    // cout << "Original RGB Pixel: " <<     img.at<Vec3b>(0, 0) << endl
-    //      << "RGB Pixel to XYZ: "   << rgb_xyz.at<Vec3f>(0, 0) << endl << endl;
-
-    // Mat xyz_lms = XYZ_2_LMS(rgb_xyz);
-    // cout << "Original XYZ Pixel: " << rgb_xyz.at<Vec3f>(0, 0) << endl
-    //      << "XYZ Pixel to LMS: "   << xyz_lms.at<Vec3f>(0, 0) << endl << endl;
-
-    // Mat rgb_lms = RGB_2_LMS(img);
-    // cout << "Original RGB Pixel: " <<     img.at<Vec3b>(0, 0) << endl
-    //      << "RGB Pixel to LMS: "   << rgb_lms.at<Vec3f>(0, 0) << endl << endl;
-
-    // Mat logLms_xyz_lalbe = LMS_2_LAlBe(xyz_lms);
-    // cout << "Original LMS Pixel (Using XYZ_2_LMS): " <<          xyz_lms.at<Vec3f>(0, 0) << endl
-    //      << "LMS Pixel to LAlBe: "                   << logLms_xyz_lalbe.at<Vec3f>(0, 0) << endl << endl;
-
-    // Mat lalbe_logLms_xyz = LAlBe_2_LMS(logLms_xyz_lalbe);
-    // cout << "LAlBe Pixel: "                              << logLms_xyz_lalbe.at<Vec3f>(0, 0) << endl
-    //      << "LAlBe Pixel back to LMS (From XYZ_2_LMS): " << lalbe_logLms_xyz.at<Vec3f>(0, 0) << endl << endl;
-
-    // Mat logLms_rgb_lalbe = LMS_2_LAlBe(xyz_lms);
-    // cout << "Original LMS Pixel (Using RGB_2_LMS): " <<          xyz_lms.at<Vec3f>(0, 0) << endl
-    //      << "LMS Pixel to LAlBe: "                   << logLms_rgb_lalbe.at<Vec3f>(0, 0) << endl << endl;
-
-    // Mat lalbe_logLms_rgb = LAlBe_2_LMS(logLms_rgb_lalbe);
-    // cout << "LAlBe Pixel: "                              << logLms_rgb_lalbe.at<Vec3f>(0, 0) << endl
-    //      << "LAlBe Pixel back to LMS (From RGB_2_LMS): " << lalbe_logLms_rgb.at<Vec3f>(0, 0) << endl << endl;
-
-    // Mat lms_xyz_rgb = LMS_2_RGB(xyz_lms);
-    // cout << "LMS pixel (From XYZ_2_LMS): " <<     xyz_lms.at<Vec3f>(0, 0) << endl
-    //      << "LMS^10 back to RGB: "         << lms_xyz_rgb.at<Vec3b>(0, 0) << endl << endl;
-    // imshow("Hola", lms_xyz_rgb);
-
-    // Mat lms_rgb = LMS_2_RGB(xyz_lms);
-    // cout << "LMS pixel (From RGB_2_LMS): " << rgb_lms.at<Vec3f>(0, 0) << endl
-    //      << "LMS^10 back to RGB: "         << lms_rgb.at<Vec3b>(0, 0) << endl << endl;
-    // imshow("Hola rgb", lms_rgb);
 
     waitKey();
     return 0;
