@@ -34,20 +34,31 @@ Mat LMS_2_RGB(const Mat &);
 Mat RGB_2_LAlBe(const Mat &);
 Mat LAlBe_2_RGB(const Mat &);
 
+// Color correction
+Mat colorCorrection(const Mat &, const Mat &);
+
+// Utilities
+vector<float> channelMeans(const Mat &);
+vector<float>   channelStd(const Mat &, const vector<float> &);
+
 int main() {
     const string IMG_PATH = "./res/",
-                 IMG_NAME = "test1",
                  IMG_EXT = ".jpg",
-                 IMG_FILENAME = IMG_PATH + IMG_NAME + IMG_EXT;
+                 IMG_SRC_NAME = "test1",
+                 IMG_TRG_NAME = "test2",
+                 IMG_SRC_FILENAME = IMG_PATH + IMG_SRC_NAME + IMG_EXT,
+                 IMG_TRG_FILENAME = IMG_PATH + IMG_TRG_NAME + IMG_EXT;
 
-    Mat img = imread(IMG_FILENAME);
+    Mat src = imread(IMG_SRC_FILENAME),
+        trg = imread(IMG_TRG_FILENAME);
 
-    Mat lalbe_mat = RGB_2_LAlBe(img);
-    cout << "RGB > LAlBe: " << img.at<Vec3b>(0, 0) << " > " << lalbe_mat.at<Vec3f>(0, 0) << endl;
+    imshow("Source (" + IMG_SRC_NAME + ")", src);
+    imshow("Target (" + IMG_TRG_NAME + ")", trg);
 
-    Mat rgb_mat = LAlBe_2_RGB(lalbe_mat);
-    cout << "LAlBe > RGB: " << lalbe_mat.at<Vec3f>(0, 0) << " > " << rgb_mat.at<Vec3b>(0, 0) << endl;
-    imshow("LAlBe > RGB", rgb_mat);
+    Mat lalbe_src = RGB_2_LAlBe(src),
+        lalbe_trg = RGB_2_LAlBe(trg);
+
+    colorCorrection(lalbe_src, lalbe_trg);
 
     waitKey();
     return 0;
@@ -250,4 +261,70 @@ Mat RGB_2_LAlBe(const Mat &src) {
 
 Mat LAlBe_2_RGB(const Mat &src) {
     return (LMS_2_RGB(LAlBe_2_LMS(src)));
+}
+
+// Color correction
+Mat colorCorrection(const Mat &src, const Mat &trg) {
+    Mat output = Mat::zeros(1, 1, CV_32FC3);
+
+    if(!src.data || src.channels() == 1) {
+        cout << "\n\t! RGB_2_LMS: Image is empty or monochromatic. Should be three channels (BGR)." << endl;
+        return output;
+    }
+
+    return output;
+}
+
+vector<float> channelMeans(const Mat &src) {
+    vector<float> means;
+
+    const int M = src.rows,
+              N = src.cols,
+              SIZE = M * N;
+
+    float mean_l = 0,
+          mean_a = 0,
+          mean_b = 0;
+    for(int i = 0; i < M; i++) {
+        Vec3f *row = (Vec3f *) src.ptr<Vec3f>(i);
+        for(int j = 0; j < N; j++) {
+            mean_l += row[j][0];
+            mean_a += row[j][1];
+            mean_b += row[j][2];
+        }
+    }
+
+    means.push_back(mean_l / SIZE);
+    means.push_back(mean_a / SIZE);
+    means.push_back(mean_b / SIZE);
+
+    return means;
+}
+
+vector<float> channelStd(const Mat &src, const vector<float> &means) {
+    vector<float> stds;
+
+    const int M = src.rows,
+              N = src.cols,
+              SIZE = M * N;
+
+    // Computing standard deviation
+    float std_l = 0,
+          std_a = 0,
+          std_b = 0;
+
+    for(int i = 0; i < M; i++) {
+        Vec3f *row = (Vec3f *) src.ptr<Vec3f>(i);
+        for(int j = 0; j < N; j++) {
+            std_l += (row[j][0] - means[0]) * (row[j][0] - means[0]);
+            std_a += (row[j][1] - means[1]) * (row[j][1] - means[1]);
+            std_b += (row[j][2] - means[2]) * (row[j][2] - means[2]);
+        }
+    }
+
+    stds.push_back(sqrt(std_l / SIZE));
+    stds.push_back(sqrt(std_a / SIZE));
+    stds.push_back(sqrt(std_b / SIZE));
+
+    return stds;
 }
