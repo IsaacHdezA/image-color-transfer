@@ -27,10 +27,9 @@ inline float fast_inv_sqrt(float n) {
 Mat RGB_2_XYZ(const Mat &);
 Mat XYZ_2_LMS(const Mat &);
 Mat RGB_2_LMS(const Mat &);
-Mat RGB_2_logLMS(const Mat &);
 Mat LMS_2_LAlBe(const Mat &);
-Mat LAlBe_2_logLMS(const Mat &);
-Mat logLMS_2_RGB(const Mat &);
+Mat LAlBe_2_LMS(const Mat &);
+Mat LMS_2_RGB(const Mat &);
 
 int main() {
     const string IMG_PATH = "./res/",
@@ -44,7 +43,7 @@ int main() {
     cout << "Original RGB Pixel: " <<     img.at<Vec3b>(0, 0) << endl
          << "RGB Pixel to XYZ: "   << rgb_xyz.at<Vec3f>(0, 0) << endl << endl;
 
-    // Now is XYZ_2_logLMS
+    // Now is XYZ_2_LMS
     Mat xyz_lms = XYZ_2_LMS(rgb_xyz);
     cout << "Original XYZ Pixel: " << rgb_xyz.at<Vec3f>(0, 0) << endl
          << "XYZ Pixel to LMS: "   << xyz_lms.at<Vec3f>(0, 0) << endl << endl;
@@ -53,21 +52,21 @@ int main() {
     // cout << "Original RGB Pixel: " <<     img.at<Vec3b>(0, 0) << endl
     //      << "RGB Pixel to LMS: "   << rgb_lms.at<Vec3f>(0, 0) << endl << endl;
 
-    // Mat rgb_logLms = RGB_2_logLMS(img);
+    // Mat rgb_logLms = RGB_2_LMS(img);
     // cout << "Original RGB Pixel: "  <<        img.at<Vec3b>(0, 0) << endl
-    //      << "RGB Pixel to logLMS: " << rgb_logLms.at<Vec3f>(0, 0) << endl << endl;
+    //      << "RGB Pixel to LMS: " << rgb_logLms.at<Vec3f>(0, 0) << endl << endl;
 
     Mat logLms_lalbe = LMS_2_LAlBe(xyz_lms);
-    cout << "Original logLMS Pixel: " <<      xyz_lms.at<Vec3f>(0, 0) << endl
-         << "logLMS Pixel to LAlBe: " << logLms_lalbe.at<Vec3f>(0, 0) << endl << endl;
+    cout << "Original LMS Pixel: " <<      xyz_lms.at<Vec3f>(0, 0) << endl
+         << "LMS Pixel to LAlBe: " << logLms_lalbe.at<Vec3f>(0, 0) << endl << endl;
 
-    Mat lalbe_logLms = LAlBe_2_logLMS(logLms_lalbe);
+    Mat lalbe_logLms = LAlBe_2_LMS(logLms_lalbe);
     cout << "LAlBe Pixel: "                << logLms_lalbe.at<Vec3f>(0, 0) << endl
-         << "LAlBe Pixel back to logLMS: " << lalbe_logLms.at<Vec3f>(0, 0) << endl << endl;
+         << "LAlBe Pixel back to LMS: " << lalbe_logLms.at<Vec3f>(0, 0) << endl << endl;
 
-    Mat lms_rgb = logLMS_2_RGB(xyz_lms);
-    cout << "logLMS pixel: "          << xyz_lms.at<Vec3f>(0, 0) << endl
-         << "logLMS^10 back to RGB: " << lms_rgb.at<Vec3b>(0, 0) << endl << endl;
+    Mat lms_rgb = LMS_2_RGB(xyz_lms);
+    cout << "LMS pixel: "          << xyz_lms.at<Vec3f>(0, 0) << endl
+         << "LMS^10 back to RGB: " << lms_rgb.at<Vec3b>(0, 0) << endl << endl;
     imshow("Hola", lms_rgb);
 
     Mat cv_rgb_xyz;
@@ -84,7 +83,7 @@ int main() {
     cout << "Original RGB Pixel: "  <<        img.at<Vec3b>(0, 0) << endl
          << "RGB Pixel to CIELab: " << cv_rgb_lab.at<Vec3f>(0, 0) << endl << endl;
 
-    // Mat lms_rgb = logLMS_2_RGB(rgb_lms);
+    // Mat lms_rgb = LMS_2_RGB(rgb_lms);
     // cout << "LMS pixel: "       << rgb_lms.at<Vec3f>(0, 0) << endl
     //      << "LMS back to RGB: " << lms_rgb.at<Vec3b>(0, 0) << endl << endl;
     // imshow("Hola", lms_rgb);
@@ -192,34 +191,6 @@ Mat RGB_2_LMS(const Mat &src) {
     for(int i = 0; i < srcCopy.rows; i++) {
         Vec3f *row = (Vec3f *) srcCopy.ptr<Vec3f>(i),
               *out = (Vec3f *)  output.ptr<Vec3f>(i);
-        for(int j = 0; j < srcCopy.cols; j++)
-            gemm(M_CONV, row[j], 1.0, Mat(), 0.0, out[j]);
-    }
-
-    return output;
-}
-
-Mat RGB_2_logLMS(const Mat &src) {
-    Mat output = Mat::zeros(1, 1, CV_32FC3);
-
-    if(!src.data || src.channels() == 1) {
-        cout << "\n\t! RGB_2_LMS: Image is empty or monochromatic. Should be three channels (BGR)." << endl;
-        return output;
-    }
-
-    const Mat M_CONV = (Mat_<float>(3, 3) <<
-        0.3811f, 0.5783f, 0.0402f,
-        0.1967f, 0.7244f, 0.0782f,
-        0.0241f, 0.1288f, 0.8444f
-    );
-
-    Mat srcCopy;
-    src.convertTo(srcCopy, CV_32FC3);
-    output = Mat::zeros(src.rows, src.cols, CV_32FC3);
-
-    for(int i = 0; i < srcCopy.rows; i++) {
-        Vec3f *row = (Vec3f *) srcCopy.ptr<Vec3f>(i),
-              *out = (Vec3f *)  output.ptr<Vec3f>(i);
         for(int j = 0; j < srcCopy.cols; j++) {
             gemm(M_CONV, row[j], 1.0, Mat(), 0.0, out[j]);
             for(int k = 0; k < 3; k++)
@@ -260,7 +231,7 @@ Mat LMS_2_LAlBe(const Mat &src) {
     return output;
 }
 
-Mat LAlBe_2_logLMS(const Mat &src) {
+Mat LAlBe_2_LMS(const Mat &src) {
     Mat output = Mat::zeros(1, 1, CV_32FC3);
 
     if(!src.data || src.channels() == 1) {
@@ -291,7 +262,7 @@ Mat LAlBe_2_logLMS(const Mat &src) {
     return output;
 }
 
-Mat logLMS_2_RGB(const Mat &src) {
+Mat LMS_2_RGB(const Mat &src) {
     Mat output = Mat::zeros(1, 1, CV_32FC3);
 
     if(!src.data || src.channels() == 1) {
@@ -306,28 +277,31 @@ Mat logLMS_2_RGB(const Mat &src) {
     );
 
     // Raising values to power ten to go back to linear space
-    Mat log_pow10;
-    pow(src, 10, log_pow10);
+    Mat log_pow10 = src.clone();
+    for(int i = 0; i < src.rows; i++) {
+        Vec3f *row = (Vec3f *) log_pow10.ptr<Vec3f>(i);
+        for(int j = 0; j < src.cols; j++) {
+            row[j][0] = pow(10, row[j][0]);
+            row[j][0] = ((row[j][0] == 1.0000) ? 0 : row[j][0]);
+
+            row[j][1] = pow(10, row[j][1]);
+            row[j][1] = ((row[j][0] == 1.0000) ? 0 : row[j][1]);
+
+            row[j][2] = pow(10, row[j][2]);
+            row[j][2] = ((row[j][0] == 1.0000) ? 0 : row[j][2]);
+        }
+    }
 
     output = Mat::zeros(src.rows, src.cols, CV_32FC3);
-
     for(int i = 0; i < log_pow10.rows; i++) {
         Vec3f *row = (Vec3f *) log_pow10.ptr<Vec3f>(i),
               *out = (Vec3f *)    output.ptr<Vec3f>(i);
         for(int j = 0; j < log_pow10.cols; j++) {
-            for(int k = 0; k < output.channels(); k++)
-                row[j][k] = (row[j][k] == 1.0000 ? 0 : row[j][k]);
             gemm(M_CONV, row[j], 1.0, Mat(), 0.0, out[j]);
         }
     }
 
-    // cout << "\tlogLMS pixel: "                  <<       src.at<Vec3f>(0, 0) << endl
-    //      << "\tlogLMS^10 pixel: "               << log_pow10.at<Vec3f>(0, 0) << endl
-    //      << "\tlogLMS^10 back to RGB (float): " <<    output.at<Vec3f>(0, 0) << endl;
-
     output.convertTo(output, CV_8UC3);
-
-    // cout << "\tRGB float pixel back to uchar: " << output.at<Vec3b>(0, 0) << endl;
 
     return output;
 }
