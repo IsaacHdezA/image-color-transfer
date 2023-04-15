@@ -35,7 +35,7 @@ Mat RGB_2_LAlBe(const Mat &);
 Mat LAlBe_2_RGB(const Mat &);
 
 // Color correction
-Mat colorCorrection(const Mat &, const Mat &);
+Mat colorTransfer(const Mat &, const Mat &);
 
 // Utilities
 vector<float> channelMeans(const Mat &);
@@ -44,8 +44,8 @@ vector<float>   channelStd(const Mat &, const vector<float> &);
 int main() {
     const string IMG_PATH = "./res/",
                  IMG_EXT = ".jpg",
-                 IMG_SRC_NAME = "test1",
-                 IMG_TRG_NAME = "test2",
+                 IMG_SRC_NAME = "test5",
+                 IMG_TRG_NAME = "test4_3",
                  IMG_SRC_FILENAME = IMG_PATH + IMG_SRC_NAME + IMG_EXT,
                  IMG_TRG_FILENAME = IMG_PATH + IMG_TRG_NAME + IMG_EXT;
 
@@ -56,9 +56,10 @@ int main() {
     imshow("Target (" + IMG_TRG_NAME + ")", trg);
 
     Mat lalbe_src = RGB_2_LAlBe(src),
-        lalbe_trg = RGB_2_LAlBe(trg);
-
-    colorCorrection(lalbe_src, lalbe_trg);
+        lalbe_trg = RGB_2_LAlBe(trg),
+        color_corrected = colorTransfer(lalbe_src, lalbe_trg);
+    
+    imshow("Resulting image", color_corrected);
 
     waitKey();
     return 0;
@@ -264,13 +265,57 @@ Mat LAlBe_2_RGB(const Mat &src) {
 }
 
 // Color correction
-Mat colorCorrection(const Mat &src, const Mat &trg) {
+Mat colorTransfer(const Mat &src, const Mat &trg) {
     Mat output = Mat::zeros(1, 1, CV_32FC3);
 
     if(!src.data || src.channels() == 1) {
         cout << "\n\t! RGB_2_LMS: Image is empty or monochromatic. Should be three channels (BGR)." << endl;
         return output;
     }
+
+    output = src.clone();
+
+    const int M = src.rows,
+              N = src.cols,
+              SIZE = M * N;
+
+    vector<float> src_means = channelMeans(src),
+                  src_std   = channelStd(src, src_means),
+                  trg_means = channelMeans(trg),
+                  trg_std   = channelStd(trg, trg_means);
+
+    // Substracting mean to original pixels
+    for(int i = 0; i < M; i++) {
+        Vec3f *row = (Vec3f *) output.ptr<Vec3f>(i);
+        for(int j = 0; j < N; j++) {
+            row[j][0] -= src_means[0];
+            row[j][1] -= src_means[1];
+            row[j][2] -= src_means[2];
+        }
+    }
+
+    // Scale data points
+    for(int i = 0; i < M; i++) {
+        Vec3f *row = (Vec3f *) output.ptr<Vec3f>(i);
+        for(int j = 0; j < N; j++) {
+            row[j][0] = (trg_std[0] / src_std[0]) * row[j][0];
+            row[j][1] = (trg_std[1] / src_std[1]) * row[j][1];
+            row[j][2] = (trg_std[2] / src_std[2]) * row[j][2];
+        }
+    }
+
+    // Adding mean to modified pixels
+    for(int i = 0; i < M; i++) {
+        Vec3f *row = (Vec3f *) output.ptr<Vec3f>(i);
+        for(int j = 0; j < N; j++) {
+            row[j][0] += trg_means[0];
+            row[j][1] += trg_means[1];
+            row[j][2] += trg_means[2];
+        }
+    }
+
+    output = LAlBe_2_RGB(output);
+    output.convertTo(output, CV_8UC3);
 
     return output;
 }
