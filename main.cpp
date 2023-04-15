@@ -268,15 +268,15 @@ Mat LAlBe_2_logLMS(const Mat &src) {
         return output;
     }
 
+    const float SQRT_3   = fast_inv_sqrt(3),
+                SQRT_6   = fast_inv_sqrt(6),
+                SQRT_2   = fast_inv_sqrt(2),
+                SQRT_2_3 = -1 * sqrt(2.0/3.0);
+
     const Mat M_CONV = (Mat_<float>(3, 3) <<
-        1,  1,  1,
-        1,  1, -1,
-        1, -2,  0
-    ),
-    M_CONV_2 = (Mat_<float>(3, 3) <<
-        sqrt(3)/3, 0,         0,
-        0,         sqrt(6)/6, 0,
-        0,         0,         sqrt(2)/2
+        SQRT_3,   SQRT_6,  SQRT_2,
+        SQRT_3,   SQRT_6, -SQRT_2,
+        SQRT_3, SQRT_2_3,  0.0000
     );
 
     output = Mat::zeros(src.rows, src.cols, CV_32FC3);
@@ -285,7 +285,7 @@ Mat LAlBe_2_logLMS(const Mat &src) {
         Vec3f *row = (Vec3f *) src.ptr<Vec3f>(i),
               *out = (Vec3f *)  output.ptr<Vec3f>(i);
         for(int j = 0; j < src.cols; j++)
-            gemm(M_CONV * M_CONV_2, row[j], 1.0, Mat(), 0.0, out[j]);
+            gemm(M_CONV, row[j], 1.0, Mat(), 0.0, out[j]);
     }
 
     return output;
