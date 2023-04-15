@@ -49,16 +49,16 @@ int main() {
     cout << "Original XYZ Pixel: " << rgb_xyz.at<Vec3d>(0, 0) << endl
          << "XYZ Pixel to LMS: "   << xyz_lms.at<Vec3d>(0, 0) << endl << endl;
 
-    Mat rgb_lms = RGB_2_LMS(img);
-    cout << "Original RGB Pixel: " <<     img.at<Vec3b>(0, 0) << endl
-         << "RGB Pixel to LMS: "   << rgb_lms.at<Vec3d>(0, 0) << endl << endl;
+    // Mat rgb_lms = RGB_2_LMS(img);
+    // cout << "Original RGB Pixel: " <<     img.at<Vec3b>(0, 0) << endl
+    //      << "RGB Pixel to LMS: "   << rgb_lms.at<Vec3d>(0, 0) << endl << endl;
 
-    Mat rgb_logLms = RGB_2_logLMS(img);
-    cout << "Original RGB Pixel: "  <<        img.at<Vec3b>(0, 0) << endl
-         << "RGB Pixel to logLMS: " << rgb_logLms.at<Vec3d>(0, 0) << endl << endl;
+    // Mat rgb_logLms = RGB_2_logLMS(img);
+    // cout << "Original RGB Pixel: "  <<        img.at<Vec3b>(0, 0) << endl
+    //      << "RGB Pixel to logLMS: " << rgb_logLms.at<Vec3d>(0, 0) << endl << endl;
 
-    Mat logLms_lalbe = LMS_2_LAlBe(rgb_logLms);
-    cout << "Original logLMS Pixel: " <<   rgb_logLms.at<Vec3d>(0, 0) << endl
+    Mat logLms_lalbe = LMS_2_LAlBe(xyz_lms);
+    cout << "Original logLMS Pixel: " <<      xyz_lms.at<Vec3d>(0, 0) << endl
          << "logLMS Pixel to LAlBe: " << logLms_lalbe.at<Vec3d>(0, 0) << endl << endl;
 
     Mat lalbe_logLms = LAlBe_2_logLMS(logLms_lalbe);
@@ -66,8 +66,8 @@ int main() {
          << "LAlBe Pixel back to logLMS: " << lalbe_logLms.at<Vec3d>(0, 0) << endl << endl;
 
     Mat lms_rgb = logLMS_2_RGB(xyz_lms);
-    cout << "logLMS pixel: "          << rgb_logLms.at<Vec3d>(0, 0) << endl
-         << "logLMS^10 back to RGB: " <<    lms_rgb.at<Vec3b>(0, 0) << endl << endl;
+    cout << "logLMS pixel: "          << xyz_lms.at<Vec3d>(0, 0) << endl
+         << "logLMS^10 back to RGB: " << lms_rgb.at<Vec3b>(0, 0) << endl << endl;
     imshow("Hola", lms_rgb);
 
     Mat cv_rgb_xyz;
@@ -76,6 +76,13 @@ int main() {
     cout << cv_rgb_xyz.type() << endl;
     cout << "Original RGB Pixel: " <<        img.at<Vec3b>(0, 0) << endl
          << "RGB Pixel to XYZ: "   << cv_rgb_xyz.at<Vec3d>(0, 0) << endl << endl;
+         
+    Mat cv_rgb_lab;
+    cvtColor(img, cv_rgb_lab, COLOR_RGB2Lab);
+    cv_rgb_lab.convertTo(cv_rgb_lab, CV_64FC3);
+    cout << cv_rgb_lab.type() << endl;
+    cout << "Original RGB Pixel: "  <<        img.at<Vec3b>(0, 0) << endl
+         << "RGB Pixel to CIELab: " << cv_rgb_lab.at<Vec3d>(0, 0) << endl << endl;
 
     // Mat lms_rgb = logLMS_2_RGB(rgb_lms);
     // cout << "LMS pixel: "       << rgb_lms.at<Vec3f>(0, 0) << endl
@@ -294,13 +301,13 @@ Mat logLMS_2_RGB(const Mat &src) {
         }
     }
 
-    cout << "\tlogLMS pixel: "                  <<       src.at<Vec3d>(0, 0) << endl
-         << "\tlogLMS^10 pixel: "               << log_pow10.at<Vec3d>(0, 0) << endl
-         << "\tlogLMS^10 back to RGB (float): " <<    output.at<Vec3d>(0, 0) << endl;
+    // cout << "\tlogLMS pixel: "                  <<       src.at<Vec3d>(0, 0) << endl
+    //      << "\tlogLMS^10 pixel: "               << log_pow10.at<Vec3d>(0, 0) << endl
+    //      << "\tlogLMS^10 back to RGB (float): " <<    output.at<Vec3d>(0, 0) << endl;
 
     output.convertTo(output, CV_8UC3);
 
-    cout << "\tRGB float pixel back to uchar: " << output.at<Vec3b>(0, 0) << endl;
+    // cout << "\tRGB float pixel back to uchar: " << output.at<Vec3b>(0, 0) << endl;
 
     return output;
 }
