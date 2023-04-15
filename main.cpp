@@ -24,12 +24,12 @@ inline float fast_inv_sqrt(float n) {
     return y;
 }
 
-Mat RGB_2_XYZ(const Mat &);
-Mat XYZ_2_LMS(const Mat &);
-Mat RGB_2_LMS(const Mat &);
+Mat   RGB_2_XYZ(const Mat &);
+Mat   XYZ_2_LMS(const Mat &);
+Mat   RGB_2_LMS(const Mat &);
 Mat LMS_2_LAlBe(const Mat &);
 Mat LAlBe_2_LMS(const Mat &);
-Mat LMS_2_RGB(const Mat &);
+Mat   LMS_2_RGB(const Mat &);
 
 Mat RGB_2_LAlBe(const Mat &);
 Mat LAlBe_2_RGB(const Mat &);
@@ -44,21 +44,17 @@ vector<float>   channelStd(const Mat &, const vector<float> &);
 int main() {
     const string IMG_PATH = "./res/",
                  IMG_EXT = ".jpg",
-                 IMG_SRC_NAME = "test5",
-                 IMG_TRG_NAME = "test4_3",
+                 IMG_SRC_NAME = "test1",
+                 IMG_TRG_NAME = "test7",
                  IMG_SRC_FILENAME = IMG_PATH + IMG_SRC_NAME + IMG_EXT,
                  IMG_TRG_FILENAME = IMG_PATH + IMG_TRG_NAME + IMG_EXT;
 
     Mat src = imread(IMG_SRC_FILENAME),
-        trg = imread(IMG_TRG_FILENAME);
+        trg = imread(IMG_TRG_FILENAME),
+        color_corrected = colorTransfer(src, trg);
 
     imshow("Source (" + IMG_SRC_NAME + ")", src);
     imshow("Target (" + IMG_TRG_NAME + ")", trg);
-
-    Mat lalbe_src = RGB_2_LAlBe(src),
-        lalbe_trg = RGB_2_LAlBe(trg),
-        color_corrected = colorTransfer(lalbe_src, lalbe_trg);
-    
     imshow("Resulting image", color_corrected);
 
     waitKey();
@@ -108,7 +104,7 @@ Mat XYZ_2_LMS(const Mat &src) {
     );
 
     output = Mat::zeros(src.rows, src.cols, CV_32FC3);
-    
+
     for(int i = 0; i < src.rows; i++) {
         Vec3f *row = (Vec3f *)    src.ptr<Vec3f>(i),
               *out = (Vec3f *) output.ptr<Vec3f>(i);
@@ -172,7 +168,7 @@ Mat LMS_2_LAlBe(const Mat &src) {
 
     const Mat M_CONV = (Mat_<float>(3, 3) <<
         SQRT_3,  SQRT_3,   SQRT_3,
-        SQRT_6,  SQRT_6, SQRT_2_3, 
+        SQRT_6,  SQRT_6, SQRT_2_3,
         SQRT_2, -SQRT_2,   0.0000
     );
 
@@ -264,7 +260,6 @@ Mat LAlBe_2_RGB(const Mat &src) {
     return (LMS_2_RGB(LAlBe_2_LMS(src)));
 }
 
-// Color correction
 Mat colorTransfer(const Mat &src, const Mat &trg) {
     Mat output = Mat::zeros(1, 1, CV_32FC3);
 
@@ -273,16 +268,18 @@ Mat colorTransfer(const Mat &src, const Mat &trg) {
         return output;
     }
 
-    output = src.clone();
+    Mat src_lalbe = RGB_2_LAlBe(src),
+        trg_lalbe = RGB_2_LAlBe(trg);
+
+    output = src_lalbe.clone();
 
     const int M = src.rows,
-              N = src.cols,
-              SIZE = M * N;
+              N = src.cols;
 
-    vector<float> src_means = channelMeans(src),
-                  src_std   = channelStd(src, src_means),
-                  trg_means = channelMeans(trg),
-                  trg_std   = channelStd(trg, trg_means);
+    vector<float> src_means = channelMeans(src_lalbe),
+                  trg_means = channelMeans(trg_lalbe),
+                  src_std   =   channelStd(src_lalbe, src_means),
+                  trg_std   =   channelStd(trg_lalbe, trg_means);
 
     // Substracting mean to original pixels
     for(int i = 0; i < M; i++) {
@@ -315,7 +312,6 @@ Mat colorTransfer(const Mat &src, const Mat &trg) {
     }
 
     output = LAlBe_2_RGB(output);
-    output.convertTo(output, CV_8UC3);
 
     return output;
 }
